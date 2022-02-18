@@ -25,8 +25,6 @@ pip-compile: venv
 pip-sync: venv pip-compile
 	. venv/bin/activate && venv/bin/pip-sync $(wildcard requirements/*.txt)
 
-docker-setup: venv pip-sync
-
 check: type-check test lint
 
 format: venv

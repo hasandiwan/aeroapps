@@ -1,9 +1,13 @@
 """Query flight information from AeroAPI and present it to a frontend service"""
 
 from datetime import datetime, timezone
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 import os
 import random
 from typing import Optional
+
 import requests
 from flask import Flask, jsonify, abort, Response
 from flask_caching import Cache
@@ -43,7 +47,7 @@ def boards_request(api_resource: str, api_object_name: str) -> list:
 
     # If there isn't a full "page" in the cache make a new request
     if len(flights) < 15:
-        app.logger.info(f"Making AeroAPI request to GET {api_resource}")
+        logging.info(f"Making AeroAPI request to GET {api_resource}")
         result = AEROAPI.get(f"{AEROAPI_BASE_URL}{api_resource}")
         if result.status_code != 200:
             abort(result.status_code)
@@ -55,7 +59,7 @@ def boards_request(api_resource: str, api_object_name: str) -> list:
             id_list.append(entry["id"])
         CACHE.set(api_resource, id_list)
     else:
-        app.logger.info(f"Populating {api_resource} from cache")
+        logging.info(f"Populating {api_resource} from cache")
 
     return flights
 
@@ -147,7 +151,7 @@ def get_flight(fa_flight_id: Optional[str] = None) -> Response:
 
         if flight_id_list is None:
             params = {"query": "-inAir 1"}
-            app.logger.info(f"Making AeroAPI request to GET {api_resource}")
+            logging.info(f"Making AeroAPI request to GET {api_resource}")
             result = AEROAPI.get(f"{AEROAPI_BASE_URL}{api_resource}", params=params)
             if result.status_code != 200:
                 abort(result.status_code)
@@ -156,7 +160,7 @@ def get_flight(fa_flight_id: Optional[str] = None) -> Response:
                 flight_id_list.append(flight["fa_flight_id"])
             CACHE.set(api_resource, flight_id_list)
         else:
-            app.logger.info(f"Populating {api_resource} from cache")
+            logging.info(f"Populating {api_resource} from cache")
 
         return get_flight(random.choice(flight_id_list))
 
@@ -164,14 +168,14 @@ def get_flight(fa_flight_id: Optional[str] = None) -> Response:
     api_resource = f"/flights/{fa_flight_id}"
     flight = CACHE.get(fa_flight_id)
     if flight is None:
-        app.logger.info(f"Making AeroAPI request to GET {api_resource}")
+        logging.info(f"Making AeroAPI request to GET {api_resource}")
         result = AEROAPI.get(f"{AEROAPI_BASE_URL}{api_resource}")
         if result.status_code != 200:
             abort(result.status_code)
         flight = format_response(result.json(), "flights")
         CACHE.set(flight["id"], flight)
     else:
-        app.logger.info(f"Populating {api_resource} from cache")
+        logging.info(f"Populating {api_resource} from cache")
 
     return jsonify(flight)
 
@@ -183,7 +187,7 @@ def get_busiest_airports() -> Response:
     airports = CACHE.get(api_resource)
 
     if airports is None:
-        app.logger.info(f"Making AeroAPI request to GET {api_resource}")
+        logging.info(f"Making AeroAPI request to GET {api_resource}")
         result = AEROAPI.get(f"{AEROAPI_BASE_URL}{api_resource}")
         if result.status_code != 200:
             abort(result.status_code)
@@ -191,7 +195,7 @@ def get_busiest_airports() -> Response:
         for entry in result.json()["entities"]:
             airports.append(entry["entity_id"])
     else:
-        app.logger.info(f"Populating {api_resource} from cache")
+        logging.info(f"Populating {api_resource} from cache")
 
     CACHE.set(api_resource, airports)
     return jsonify(airports)
@@ -234,7 +238,7 @@ def get_map(fa_flight_id: str) -> Response:
     maps_data = CACHE.get(api_resource)
 
     if maps_data is None:
-        app.logger.info(f"Making AeroAPI request to GET {api_resource}")
+        logging.info(f"Making AeroAPI request to GET {api_resource}")
         result = AEROAPI.get(f"{AEROAPI_BASE_URL}{api_resource}")
         if result.status_code != 200:
             abort(result.status_code)
@@ -242,7 +246,7 @@ def get_map(fa_flight_id: str) -> Response:
         maps_data = payload["map"]
         CACHE.set(api_resource, maps_data)
     else:
-        app.logger.info(f"Populating {api_resource} from cache")
+        logging.info(f"Populating {api_resource} from cache")
 
     return maps_data
 

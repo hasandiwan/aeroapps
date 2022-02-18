@@ -229,8 +229,7 @@ def airport_scheduled(airport: str) -> Response:
 
 @app.route("/map/<fa_flight_id>")
 def get_map(fa_flight_id: str) -> Response:
-    """Get a static map image of the current flight in base64 png format
-    """
+    """Get a static map image of the current flight in base64 png format"""
     api_resource = f"/flights/{fa_flight_id}/map"
     maps_data = CACHE.get(api_resource)
 
